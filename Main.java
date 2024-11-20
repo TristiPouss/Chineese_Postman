@@ -16,11 +16,11 @@ public class Main {
         String path = scanner.nextLine();
 
         try {
-            // Implement DOT file parsing logic here
+            graph = UndirectedGraph.fromDotFile(path);
             System.out.println("Loading graph...");
             // Example: graph.addEdge(...);
 
-            graph.toDotString();
+            System.out.println(graph.toDotString());
 
             ChinesePostman cpp = new ChinesePostman(graph);
             cpp.solve();

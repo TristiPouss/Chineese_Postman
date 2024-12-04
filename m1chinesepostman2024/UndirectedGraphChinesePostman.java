@@ -62,58 +62,35 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
             return null;
         }
         UndirectedGraphChinesePostman result = null;
-        File newFile = new File("./m1graphs2024/dotGraphsTestPW2/" + filename + extension);
+        File newFile = new File("./test/" + filename + extension);
         try{
             try (Scanner parser = new Scanner(newFile)) {
-                while(parser.hasNextLine()){
-                    String curr = parser.nextLine().trim();
+                parser.useDelimiter("");
+                System.out.println("creating graph");
+                result = new UndirectedGraphChinesePostman();
+                int a = 0, b = 0, w = 0;
+                int count = 1;
+                while(parser.hasNext()){
 
-                    if(curr.charAt(0) == '#' || curr.isEmpty()){
+                    if (parser.hasNextInt()) {
+                        int curr = parser.nextInt();
+                        
+                        if(count == 4){
+                            result.addEdge(a, b, w);
+                            count=1;
+                            continue;
+                        }
+
+                        if(count == 3){
+                            w = curr;
+                        } else if(count == 2){
+                            b = curr;
+                        } else a = curr;
+                        
+                        count++;
+                    }else {
+                        parser.next();
                         continue;
-                    }
-
-                    String[] token = curr.split("\\s+");
-                    if(curr.contains("{")){
-                        if(token.length == 3){
-                            if(Objects.equals(token[2], "{")){
-                                if(token[0].equals("graph")){
-                                    result = new UndirectedGraphChinesePostman(token[1]);
-                                }else{
-                                    return null;
-                                }
-                            }
-                        }else{
-                            if(token[0].equals("graph")){
-                                result = new UndirectedGraphChinesePostman();
-                            }else{
-                                return null;
-                            }
-                        }
-                    }
-
-                    if(token[token.length - 1].equals("}")){
-                        return result;
-                    }
-                    
-                    if(result != null){
-                        if(token.length >= 3){
-                            if(token[1].equals("--")){
-                                int node1 = Integer.parseInt(token[0]);
-                                int node2 = Integer.parseInt(token[2]);
-                                result.addNode(node1);
-                                result.addNode(node2);
-
-                                if(token.length > 3){
-                                    result.addEdge(node1, node2, Integer.parseInt(token[token.length - 1].split("=")[1].replace("]", "")));
-                                }else{
-                                    result.addEdge(node1, node2);
-                                }
-                            }
-                        }else{
-                            if(token.length == 1 && token[0].matches("[0-9]+")){
-                                result.addNode(Integer.parseInt(token[0]));
-                            }
-                        }
                     }
                 }
             } catch (NumberFormatException e) {

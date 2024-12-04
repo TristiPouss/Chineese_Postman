@@ -4,22 +4,26 @@ import m1graphs2024.*;
 import java.util.*;
 
 public class ChinesePostman {
-    private final UndirectedGraph graph;
+    private final UndirectedGraphChinesePostman graph;
 
-    public ChinesePostman(UndirectedGraph graph) {
+    public ChinesePostman(UndirectedGraphChinesePostman graph) {
         this.graph = graph;
     }
 
     public boolean isEulerian() {
+        System.out.println("isEulerian");
         for(Node n : graph.getAllNodes()){
+            System.out.println("  "+ n +" : "+ n.degree());
             if(n.degree() % 2 != 0) return false;
         }
         return true;
     }
 
     public boolean isSemiEulerian() {
+        System.out.println("isSemiEulerian");
         long oddCount = 0;
         for(Node n : graph.getAllNodes()){
+            System.out.println("  "+ n +" : "+ n.degree());
             if(n.degree() % 2 != 0) oddCount++;
         }
         return oddCount == 2;
@@ -50,15 +54,15 @@ public class ChinesePostman {
 
     private void computeEulerianCircuit() {
         System.out.println("Computing Eulerian Circuit...");
-        List<Integer> circuit = new ArrayList<>();
-        Map<Pair<Integer, Integer>, Boolean> visitedEdges = new HashMap<>();
+        /*List<Integer> circuit = new ArrayList<>();
+        Map<Pair<Integer, Integer>, Boolean> visitedEdges = new HashMap<>(eul);
     
         for (Pair<Integer, Integer> edge : graph.getEdges()) {
             visitedEdges.put(edge, false);
         }
     
         Deque<Integer> stack = new ArrayDeque<>();
-        stack.push(graph.getNodes().get(0)); // Start from any node.
+        stack.push(graph.getAllNodes().get(0)); // Start from any node.
     
         while (!stack.isEmpty()) {
             int current = stack.peek();
@@ -80,13 +84,13 @@ public class ChinesePostman {
             }
         }
     
-        System.out.println("Eulerian Circuit: " + circuit);
+        System.out.println("Eulerian Circuit: " + circuit);*/
     }
     
 
     private void computeEulerianTrail() {
         System.out.println("Computing Eulerian Trail...");
-        List<Integer> trail = new ArrayList<>();
+        /*List<Integer> trail = new ArrayList<>();
         Map<Pair<Integer, Integer>, Boolean> visitedEdges = new HashMap<>();
     
         for (Pair<Integer, Integer> edge : graph.getEdges()) {
@@ -120,14 +124,14 @@ public class ChinesePostman {
             }
         }
     
-        System.out.println("Eulerian Trail: " + trail);
+        System.out.println("Eulerian Trail: " + trail);*/
     }
     
 
     private void computeChinesePostmanCircuit() {
         System.out.println("Computing Chinese Postman Circuit...");
         
-        List<Integer> oddNodes = getOddDegreeNodes();
+        /*List<Integer> oddNodes = getOddDegreeNodes();
         int n = oddNodes.size();
     
         // If already Eulerian
@@ -150,11 +154,11 @@ public class ChinesePostman {
         }
     
         // Now compute the Eulerian Circuit
-        computeEulerianCircuit();
+        computeEulerianCircuit();*/
     }
     
     private int[][] floydWarshall(UndirectedGraph graph) {
-        int size = graph.getNodes().size();
+        int size = graph.getAllNodes().size();
         int[][] dist = new int[size][size];
     
         // Initialize distances

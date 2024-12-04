@@ -53,151 +53,165 @@ public class ChinesePostman {
     }
 
     private void computeEulerianCircuit() {
-        System.out.println("Computing Eulerian Circuit...");
-        /*List<Integer> circuit = new ArrayList<>();
-        Map<Pair<Integer, Integer>, Boolean> visitedEdges = new HashMap<>(eul);
-    
-        for (Pair<Integer, Integer> edge : graph.getEdges()) {
-            visitedEdges.put(edge, false);
-        }
-    
-        Deque<Integer> stack = new ArrayDeque<>();
-        stack.push(graph.getAllNodes().get(0)); // Start from any node.
-    
-        while (!stack.isEmpty()) {
-            int current = stack.peek();
-    
-            // Find an unvisited edge from the current node
-            boolean found = false;
-            for (Pair<Integer, Integer> neighbor : graph.adjacencyList.get(current)) {
-                Pair<Integer, Integer> edge = new Pair<>(Math.min(current, neighbor.getFirst()), Math.max(current, neighbor.getFirst()));
-                if (!visitedEdges.get(edge)) {
-                    stack.push(neighbor.getFirst());
-                    visitedEdges.put(edge, true);
-                    found = true;
-                    break;
-                }
-            }
-    
-            if (!found) {
-                circuit.add(stack.pop());
-            }
-        }
-    
-        System.out.println("Eulerian Circuit: " + circuit);*/
+        List<Node> circuit = eulerianTrail(graph, graph.getAllNodes().get(0));
+        System.out.println("Eulerian Circuit: " + circuit);
     }
-    
 
     private void computeEulerianTrail() {
-        System.out.println("Computing Eulerian Trail...");
-        /*List<Integer> trail = new ArrayList<>();
-        Map<Pair<Integer, Integer>, Boolean> visitedEdges = new HashMap<>();
-    
-        for (Pair<Integer, Integer> edge : graph.getEdges()) {
-            visitedEdges.put(edge, false);
+        List<Node> oddNodes = getOddDegreeNodes();
+        if (oddNodes.size() != 2) {
+            System.out.println("Graph is not Semi-Eulerian.");
+            return;
         }
     
-        // Find the two odd degree nodes
-        List<Integer> oddNodes = getOddDegreeNodes();
-        int startNode = oddNodes.get(0); // Start from any of the odd degree nodes.
-    
-        Deque<Integer> stack = new ArrayDeque<>();
-        stack.push(startNode);
-    
-        while (!stack.isEmpty()) {
-            int current = stack.peek();
-    
-            // Find an unvisited edge from the current node
-            boolean found = false;
-            for (Pair<Integer, Integer> neighbor : graph.adjacencyList.get(current)) {
-                Pair<Integer, Integer> edge = new Pair<>(Math.min(current, neighbor.getFirst()), Math.max(current, neighbor.getFirst()));
-                if (!visitedEdges.get(edge)) {
-                    stack.push(neighbor.getFirst());
-                    visitedEdges.put(edge, true);
-                    found = true;
-                    break;
-                }
-            }
-    
-            if (!found) {
-                trail.add(stack.pop());
-            }
-        }
-    
-        System.out.println("Eulerian Trail: " + trail);*/
+        Node start = oddNodes.get(0);
+        List<Node> trail = eulerianTrail(graph, start);
+        System.out.println("Eulerian Trail: " + trail);
     }
     
 
     private void computeChinesePostmanCircuit() {
-        System.out.println("Computing Chinese Postman Circuit...");
-        
-        /*List<Integer> oddNodes = getOddDegreeNodes();
-        int n = oddNodes.size();
-    
-        // If already Eulerian
-        if (n == 0) {
+        List<Node> oddNodes = getOddDegreeNodes();
+        if (oddNodes.isEmpty()) {
+            System.out.println("Graph is already Eulerian.");
             computeEulerianCircuit();
             return;
         }
     
-        // Compute shortest path between all odd nodes (Floyd-Warshall)
+        // Étape 1 : Calcul des plus courts chemins
+        int size = graph.getAllNodes().size();
         int[][] shortestPaths = floydWarshall(graph);
     
-        // Find minimum-cost pairing of odd nodes
-        int[] match = findMinCostMatching(oddNodes, shortestPaths);
-    
-        // Duplicate edges to make graph Eulerian
-        for (int i = 0; i < match.length; i += 2) {
-            int u = oddNodes.get(match[i]);
-            int v = oddNodes.get(match[i + 1]);
-            duplicateEdges(u, v, shortestPaths);
+        // Étape 2 : Associer les sommets de degré impair
+        List<Integer> oddIndexes = new ArrayList<>();
+        for (Node oddNode : oddNodes) {
+            oddIndexes.add(graph.getAllNodes().indexOf(oddNode));
         }
     
-        // Now compute the Eulerian Circuit
-        computeEulerianCircuit();*/
+        int[] match = findMinCostMatching(oddIndexes, shortestPaths);
+    
+        // Étape 3 : Dupliquer les arêtes pour les sommets appariés
+        for (int i = 0; i < match.length; i++) {
+            if (match[i] > i) {
+                duplicateEdges(oddIndexes.get(i), oddIndexes.get(match[i]), shortestPaths);
+            }
+        }
+    
+        // Étape 4 : Trouver un circuit eulérien
+        computeEulerianCircuit();
     }
     
+    
+
+    private List<Node> eulerianTrail(UndirectedGraphChinesePostman g, Node start) {
+        List<Node> trail = new ArrayList<>();
+        Deque<Node> stack = new ArrayDeque<>();
+        stack.push(start);
+    
+        while (!stack.isEmpty()) {
+            Node current = stack.peek();
+            List<Node> neighbors = g.getNeighbors(current); // Méthode corrigée
+    
+            if (neighbors.isEmpty()) {
+                trail.add(stack.pop());
+            } else {
+                Node neighbor = neighbors.get(0); // Prendre le premier voisin disponible
+                g.removeEdge(current, neighbor);
+                stack.push(neighbor);
+            }
+        }
+    
+        Collections.reverse(trail); // Si un circuit eulérien est attendu
+        return trail;
+    }
+
+
     private int[][] floydWarshall(UndirectedGraph graph) {
         int size = graph.getAllNodes().size();
         int[][] dist = new int[size][size];
     
-        // Initialize distances
-        for (int[] row : dist) Arrays.fill(row, Integer.MAX_VALUE);
-        for (int i = 0; i < size; i++) dist[i][i] = 0;
-    
-        for (Pair<Integer, Integer> edge : graph.getEdges()) {
-            int u = edge.getFirst(), v = edge.getSecond();
-            dist[u][v] = dist[v][u] = graph.getEdgeWeight(u, v);
+        // Initialiser les distances
+        for (int i = 0; i < size; i++) {
+            Arrays.fill(dist[i], Integer.MAX_VALUE);
+            dist[i][i] = 0;
         }
     
-        // Floyd-Warshall algorithm
+        for (Edge edge : graph.getAllEdges()) {
+            int u = graph.getAllNodes().indexOf(edge.from());
+            int v = graph.getAllNodes().indexOf(edge.to());
+            dist[u][v] = dist[v][u] = edge.getWeight(); // Ajouter poids des arêtes
+        }
+    
+        // Floyd-Warshall
         for (int k = 0; k < size; k++) {
             for (int i = 0; i < size; i++) {
                 for (int j = 0; j < size; j++) {
-                    if (dist[i][k] < Integer.MAX_VALUE && dist[k][j] < Integer.MAX_VALUE) {
+                    if (dist[i][k] != Integer.MAX_VALUE && dist[k][j] != Integer.MAX_VALUE) {
                         dist[i][j] = Math.min(dist[i][j], dist[i][k] + dist[k][j]);
                     }
                 }
             }
         }
+    
         return dist;
     }
-    
+
     private int[] findMinCostMatching(List<Integer> oddNodes, int[][] shortestPaths) {
         int n = oddNodes.size();
         int[] match = new int[n];
+        Arrays.fill(match, -1);
     
-        // Use a dynamic programming algorithm or brute force for small n
-        // Implementation depends on n. For simplicity:
-        // Match nodes with greedy or similar approach.
+        // Approche brute-force pour trouver le couplage minimal
+        int minCost = Integer.MAX_VALUE;
+        int[] bestMatch = null;
     
-        // Placeholder: Implement pairing logic here.
+        List<int[]> permutations = generatePermutations(oddNodes);
+        for (int[] permutation : permutations) {
+            int cost = 0;
+            for (int i = 0; i < permutation.length; i += 2) {
+                cost += shortestPaths[permutation[i]][permutation[i + 1]];
+            }
+            if (cost < minCost) {
+                minCost = cost;
+                bestMatch = permutation;
+            }
+        }
+    
+        // Convertir permutation en couplage
+        for (int i = 0; i < bestMatch.length; i += 2) {
+            match[bestMatch[i]] = bestMatch[i + 1];
+            match[bestMatch[i + 1]] = bestMatch[i];
+        }
+    
         return match;
     }
+    private List<int[]> generatePermutations(List<Integer> oddNodes) {
+        List<int[]> permutations = new ArrayList<>();
+        permute(oddNodes, 0, permutations);
+        return permutations;
+    }
+    
+    private void permute(List<Integer> nodes, int start, List<int[]> result) {
+        if (start == nodes.size()) {
+            // Ajouter une copie de la permutation actuelle
+            result.add(nodes.stream().mapToInt(Integer::intValue).toArray());
+            return;
+        }
+        for (int i = start; i < nodes.size(); i++) {
+            // Échanger les éléments
+            Collections.swap(nodes, start, i);
+            permute(nodes, start + 1, result);
+            // Restaurer l'ordre original
+            Collections.swap(nodes, start, i);
+        }
+    }
+    
+    
+    
+ 
     
     private void duplicateEdges(int u, int v, int[][] shortestPaths) {
-        // Add edges along the shortest path between u and v to the graph.
-        // Placeholder: Implement edge duplication logic.
+       
         System.out.println("Duplicating edges between " + u + " and " + v);
     }
     

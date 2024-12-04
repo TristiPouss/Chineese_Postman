@@ -2,10 +2,15 @@ package m1chinesepostman2024;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
-import m1graphs2024.UndirectedGraph;
+import m1graphs2024.*;
+
 
 public class UndirectedGraphChinesePostman extends UndirectedGraph{
 
@@ -102,6 +107,25 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
         }
         return result;
     }
+
+
+    public List<Node> getNeighbors(Node current){
+        List<Node> result = new ArrayList<>();
+    
+        List<Edge> successors = getOutEdges(current);
+        Iterator<Edge> iteEdge = successors.iterator();
+        while(iteEdge.hasNext()){
+            result.add(iteEdge.next().to());
+        }
+        
+        System.out.println("ici "+ result);
+        return result;
+        
+    }
+
+
+    
+
 
 }
 

@@ -2,10 +2,10 @@ package m1chinesepostman2024;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Objects;
+import java.util.List;
 import java.util.Scanner;
 
-import m1graphs2024.UndirectedGraph;
+import m1graphs2024.*;
 
 public class UndirectedGraphChinesePostman extends UndirectedGraph{
 
@@ -41,6 +41,31 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
      *                        *
      **************************/
     
+    @Override
+    public String toDotString() {
+        String dotString = "graph {";
+
+        List<Node> usedNodes = getAllNodesInEdges();
+
+        for (Node n : getAllNodes()){
+            if(getList().get(n).isEmpty()){
+                if(!usedNodes.contains(n)){
+                    dotString += "\n\t" + n;
+                }
+            }else{
+                for (Edge e : getOutEdges(n)){
+                    if(e.from().getId() <= e.to().getId()){
+                        dotString += "\n\t" + e.from() + " -- " + e.to();
+                        if(e.isWeighted()) dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight() + "]";
+                    }
+                }
+            }
+        }
+
+        dotString += "\n}";
+        return dotString;
+    }
+
     /**
       * for importing a file in the restricted DOT format
       * The base extension is assumed to be .gv
@@ -65,19 +90,32 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
         File newFile = new File("./test/" + filename + extension);
         try{
             try (Scanner parser = new Scanner(newFile)) {
-                parser.useDelimiter("");
-                System.out.println("creating graph");
+                parser.useDelimiter("\\\s|\\-|\\=|\\,|\\[|\\]|\\{|\\}");
+                if (dev) System.out.println("creating graph");
                 result = new UndirectedGraphChinesePostman();
-                int a = 0, b = 0, w = 0;
+                Integer a = null, b = null, w = null;
                 int count = 1;
                 while(parser.hasNext()){
 
+                    String next = parser.next();
+                    if (dev) System.out.print(next+" ");
+                    if(next.equals("rank")){
+                        parser.nextLine();
+                    }
+
                     if (parser.hasNextInt()) {
                         int curr = parser.nextInt();
+                        if (dev) System.out.print(curr);
                         
                         if(count == 4){
-                            result.addEdge(a, b, w);
+                            if(a != null && b != null && w != null){
+                                //System.out.print("\n  Adding : "+a+" -- "+b+" w :"+w+"\n");
+                                result.addEdge(a, b, w);
+                            }
                             count=1;
+                            a = null;
+                            b = null;
+                            w = null;
                             continue;
                         }
 
@@ -89,7 +127,6 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
                         
                         count++;
                     }else {
-                        parser.next();
                         continue;
                     }
                 }
@@ -100,6 +137,7 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
         }catch(FileNotFoundException f){
             throw new RuntimeException(f);
         }
+        if (dev) System.out.println();
         return result;
     }
 

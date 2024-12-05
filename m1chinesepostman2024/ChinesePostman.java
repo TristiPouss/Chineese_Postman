@@ -4,6 +4,12 @@ import m1graphs2024.*;
 import java.util.*;
 
 public class ChinesePostman {
+    /**
+     * Variable used in developpement to print debug information or anything related to testing
+     * @hidden SET TO FALSE BEFORE EXPORT
+     */
+    public static final boolean dev = true;
+
     private final UndirectedGraphChinesePostman graph;
 
     public ChinesePostman(UndirectedGraphChinesePostman graph) {
@@ -11,19 +17,19 @@ public class ChinesePostman {
     }
 
     public boolean isEulerian() {
-        System.out.println("isEulerian");
+        if (dev) System.out.println("isEulerian");
         for(Node n : graph.getAllNodes()){
-            System.out.println("  "+ n +" : "+ n.degree());
+            if (dev) System.out.println("  "+ n +" : "+ n.degree());
             if(n.degree() % 2 != 0) return false;
         }
         return true;
     }
 
     public boolean isSemiEulerian() {
-        System.out.println("isSemiEulerian");
+        if (dev) System.out.println("isSemiEulerian");
         long oddCount = 0;
         for(Node n : graph.getAllNodes()){
-            System.out.println("  "+ n +" : "+ n.degree());
+            if (dev) System.out.println("  "+ n +" : "+ n.degree());
             if(n.degree() % 2 != 0) oddCount++;
         }
         return oddCount == 2;

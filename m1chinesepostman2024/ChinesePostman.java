@@ -241,7 +241,7 @@ public class ChinesePostman {
         return path;
     }
 
-    private void duplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
+    private void greedyDuplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
         // Étape 1 : Identifier les nœuds de degré impair
         List<Node> oddNodes = getOddDegreeNodes();
         if (oddNodes.size() % 2 != 0) {
@@ -307,7 +307,7 @@ public class ChinesePostman {
         return duplicatePairs;
     }
     
-    private void greedyDuplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
+    private void duplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
         // Étape 1 : Identifier les nœuds de degré impair
         List<Node> oddNodes = getOddDegreeNodes();
         if (oddNodes.size() % 2 != 0) {

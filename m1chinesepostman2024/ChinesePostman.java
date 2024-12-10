@@ -3,6 +3,8 @@ package m1chinesepostman2024;
 import m1graphs2024.*;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 /** 
@@ -348,11 +350,13 @@ public class ChinesePostman {
      * for exporting the result graph as a file in the DOT syntax
      * @param filename a String. The absolute path to the DOT file with no extension
      * @param extension a String, The extension of the file
-     */
-    public void toDotFile(String filename) {
-        filename += "-processed.gv";
+    * @throws IOException 
+    */
+    public void toDotFile(String filename) throws IOException {
+        Files.createDirectories(Paths.get("m1chinesepostman2024\\processed\\"));
+        String _filename = "m1chinesepostman2024\\processed\\" + filename + "-processed.gv";
         try {
-            FileWriter dotFileWriter = new FileWriter(filename);
+            FileWriter dotFileWriter = new FileWriter(_filename);
             dotFileWriter.write(toDotString());
             dotFileWriter.close();
         } catch (IOException e) {

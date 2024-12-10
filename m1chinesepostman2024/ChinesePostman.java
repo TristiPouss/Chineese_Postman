@@ -103,8 +103,8 @@ public class ChinesePostman {
     
         // Demander à l'utilisateur quelle stratégie utiliser
         System.out.println("Choose a strategy :");
-        System.out.println("1 - Greedy strategy (fast but potentially less optimal)");
-        System.out.println("2 - Exhaustive matching strategy (slower but optimal)");
+        System.out.println("1 - Greedy strategy");
+        System.out.println("2 - Exhaustive matching strategy");
         System.out.print("Your choice (1 or 2) : ");
     
         int choice;
@@ -114,19 +114,19 @@ public class ChinesePostman {
                 if (choice == 1 || choice == 2) {
                     break;
                 } else {
-                    System.out.print("Veuillez entrer 1 ou 2 : ");
+                    System.out.print("You must use 1 or 2 : ");
                 }
             } catch (NumberFormatException e) {
-                System.out.print("Veuillez entrer un nombre valide (1 ou 2) : ");
+                System.out.print("Enter a valid number (1 or 2) : ");
             }
         }
     
         // Appliquer la stratégie choisie
         if (choice == 1) {
-            System.out.println("Utilisation de la stratégie gloutonne.");
+            System.out.println("Using Greedy strategy.");
             greedyDuplicateEdgesStrategy(graph);
         } else {
-            System.out.println("Utilisation de la stratégie de couplage minimal (exhaustive).");
+            System.out.println("Using Exhaustive matching strategy .");
             duplicateEdgesStrategy(graph);
         }
     

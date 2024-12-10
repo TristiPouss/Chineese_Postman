@@ -10,6 +10,10 @@ import java.util.Scanner;
 
 import m1graphs2024.*;
 
+/** 
+ * @author Tristan de Saint Gilles
+ * @author Anton Dolard
+ */
 public class UndirectedGraphChinesePostman extends UndirectedGraph{
 
     /* Constructors */
@@ -147,21 +151,43 @@ public class UndirectedGraphChinesePostman extends UndirectedGraph{
 
     public List<Node> getNeighbors(Node current){
         List<Node> result = new ArrayList<>();
-    
-        List<Edge> successors = getOutEdges(current);
-        Iterator<Edge> iteEdge = successors.iterator();
-        while(iteEdge.hasNext()){
-            result.add(iteEdge.next().to());
+        //System.out.println(getOutEdges(current));
+        for(Edge e : getOutEdges(current)){
+            result.add(e.to());
         }
         
-        System.out.println("ici "+ result);
         return result;
         
     }
 
+    /**
+     * to get a copy of this graph into a new graph
+     * @return a UndirectedGraphChinesePostman
+     */
+    @Override
+    public UndirectedGraphChinesePostman copy(){
+        UndirectedGraphChinesePostman copy = new UndirectedGraphChinesePostman();
+        boolean add = false;
 
-    
+        for (Edge e : super.getAllEdges()) {
+            if(e.from().getId() <= e.to().getId()){
+                if(e.from() == e.to()){
+                    if(!add){
+                        if (!e.isWeighted()) copy.addEdge(new Edge(e.from().getId(), e.to().getId(), copy));
+                        else copy.addEdge(new Edge(e.from().getId(), e.to().getId(), e.getWeight(), copy));
+                        add = true;
+                    }else{
+                        add = false;
+                    }
+                }else{
+                    if (!e.isWeighted()) copy.addEdge(new Edge(e.from().getId(), e.to().getId(), copy));
+                    else copy.addEdge(new Edge(e.from().getId(), e.to().getId(), e.getWeight(), copy));
+                }
+            }
+        }
 
+        return copy;
+    }
 
 }
 

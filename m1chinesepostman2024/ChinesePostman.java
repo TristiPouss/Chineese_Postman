@@ -94,12 +94,6 @@ public class ChinesePostman {
     private void computeChinesePostmanCircuit() {
         Scanner scanner = new Scanner(System.in);
         
-        // Vérifier si le graphe est déjà eulérien
-        if (isEulerian()) {
-            if (dev) System.out.println("Graph is already Eulerian.");
-            computeEulerianCircuit();
-            return;
-        }
     
         // Demander à l'utilisateur quelle stratégie utiliser
         System.out.println("Choose a strategy :");
@@ -120,7 +114,7 @@ public class ChinesePostman {
                 System.out.print("Enter a valid number (1 or 2) : ");
             }
         }
-    
+        scanner.close();
         // Appliquer la stratégie choisie
         if (choice == 1) {
             System.out.println("Using Greedy strategy.");

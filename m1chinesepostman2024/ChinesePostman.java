@@ -15,8 +15,8 @@ public class ChinesePostman {
      * @hidden SET TO FALSE BEFORE EXPORT
      */
     public static final boolean dev = false;
-    private List<Pair<Node, Node>> redEdges = new ArrayList<>();
 
+    private List<Pair<Node, Node>> redEdges = new ArrayList<>();
     private final UndirectedGraphChinesePostman graph;
     private Type type;
     private List<Edge> trailCircuit;
@@ -67,7 +67,7 @@ public class ChinesePostman {
             System.out.println("Graph is Non-Eulerian.");
             type = Type.NON_EULERIAN;
             computeChinesePostmanCircuit();
-            System.out.println(redEdges);
+            if (dev) System.out.println(redEdges);
         }
     }
 
@@ -91,21 +91,21 @@ public class ChinesePostman {
     private void computeChinesePostmanCircuit() {
         // Vérifier si le graphe est déjà eulérien
         if (isEulerian()) {
-            System.out.println("Graph is already Eulerian.");
+            if (dev) System.out.println("Graph is already Eulerian.");
             computeEulerianCircuit();
             return;
         }
     
         if (graph.getAllNodes().size() < 10) { // Par exemple, seuil pour utiliser la stratégie complète
-            System.out.println("Utilisation de la stratégie de couplage minimal (exhaustive).");
+            System.out.println("Use of de minimal coupling strategy (exhaustive).");
             duplicateEdgesStrategy(graph);
         } else {
-            System.out.println("Utilisation de la stratégie gloutonne.");
+            System.out.println("Use of heavy strategy.");
             greedyDuplicateEdgesStrategy(graph);
         }
     
         // Étape 5 : Générer le circuit eulérien avec le graphe modifié
-        System.out.println("Modified graph: " + graph.toDotString());
+        if (dev) System.out.println("Modified graph: " + graph.toDotString());
         computeEulerianCircuit();
     }
     
@@ -201,7 +201,7 @@ public class ChinesePostman {
 
     private void duplicateEdges(int u, int v, int[][] shortestPaths) {
         List<Integer> path = reconstructPath(u, v, shortestPaths);
-        System.out.println("Duplicating path between " + u + " and " + v + ": " + path);
+        if (dev) System.out.println("Duplicating path between " + u + " and " + v + ": " + path);
         for (int i = 0; i < path.size() - 1; i++) {
             Node from = graph.getAllNodes().get(path.get(i));
             Node to = graph.getAllNodes().get(path.get(i + 1));
@@ -223,7 +223,7 @@ public class ChinesePostman {
         // Étape 1 : Identifier les nœuds de degré impair
         List<Node> oddNodes = getOddDegreeNodes();
         if (oddNodes.size() % 2 != 0) {
-            throw new IllegalArgumentException("Le graphe doit avoir un nombre pair de nœuds impairs.");
+            throw new IllegalArgumentException("Graph must have an even number of odd degree nodes");
         }
     
         // Étape 2 : Trouver les paires de nœuds impairs et les dupliquer
@@ -251,7 +251,7 @@ public class ChinesePostman {
                 Edge e = graph.getEdges(u, v).get(0);
                 graph.addEdge(u, v, e.getWeight());  // Ajouter une arête dupliquée
                 redEdges.add(pair);
-                System.out.println("Arête dupliquée : " + u + " -- " + v);
+                if (dev) System.out.println("Edge duplicated : " + u + " -- " + v);
     
                 // Mettre à jour les nœuds impairs
                 if (u.degree() % 2 == 0) {
@@ -281,7 +281,7 @@ public class ChinesePostman {
                 }
             }
         }
-        System.out.println(duplicatePairs);
+        if (dev) System.out.println(duplicatePairs);
         return duplicatePairs;
     }
     
@@ -289,7 +289,7 @@ public class ChinesePostman {
         // Étape 1 : Identifier les nœuds de degré impair
         List<Node> oddNodes = getOddDegreeNodes();
         if (oddNodes.size() % 2 != 0) {
-            throw new IllegalArgumentException("Le graphe doit avoir un nombre pair de nœuds impairs.");
+            throw new IllegalArgumentException("Graph must have an even number of odd degree nodes.");
         }
     
         // Étape 2 : Calculer les plus courts chemins entre chaque paire de nœuds impairs
@@ -345,6 +345,7 @@ public class ChinesePostman {
         String dotString = "graph {";
 
         List<Node> usedNodes = graph.getAllNodesInEdges();
+        var redEdgesCopy = new ArrayList<>(redEdges);
 
         for (Node n : graph.getAllNodes()){
             if(graph.getList().get(n).isEmpty()){
@@ -355,7 +356,15 @@ public class ChinesePostman {
                 for (Edge e : graph.getOutEdges(n)){
                     if(e.from().getId() <= e.to().getId()){
                         dotString += "\n\t" + e.from() + " -- " + e.to();
-                        if(e.isWeighted()) dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight() + "]";
+                        if(e.isWeighted()) {
+                            dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight();
+                            var p = new Pair<Node, Node>(e.from(), e.to());
+                            if (redEdgesCopy.contains(p)) {
+                                dotString += ", color=red, fontcolor=red";
+                                redEdgesCopy.remove(p);
+                            } 
+                            dotString += "]";
+                        }
                     }
                 }
             }
@@ -395,12 +404,30 @@ public class ChinesePostman {
         }
         dotString += "]";
         
+        // Process of length/cost
+        int trailSize = 0;
+        int extraCost = 0;
+        var redEdgesCopy2 = new ArrayList<>(redEdges);
+        for(Edge e : trailCircuit){
+            // Total Length
+            trailSize += e.getWeight();
+            // Extra cost
+            for(var v : redEdgesCopy2){
+                if(v.getFirst().getId() == e.from().getId()
+                && v.getSecond().getId() == e.to().getId()){
+                    extraCost += e.getWeight();
+                    redEdgesCopy2.remove(v);
+                    break;
+                }
+            }
+        }
+
         // Total length
-        dotString += "\n\tTotal length : " + trailCircuit.size();
+        dotString += "\n\tTotal length : " + trailSize;
         
         // Extra cost if chinese circuit
         if(type == Type.NON_EULERIAN){
-            dotString += "\n\tExtra cost : " + 0;
+            dotString += "\n\tExtra cost : " + extraCost;
         }
 
         dotString +="\"";

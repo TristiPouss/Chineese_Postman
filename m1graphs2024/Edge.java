@@ -136,6 +136,14 @@ public class Edge implements Comparable<Edge>{
     }
 
     /**
+     * Getter for to
+     * @return a Node
+     */
+    public Graph getGraph(){
+        return graphHolder;
+    }
+
+    /**
      * Get symmetric, reverse @from and @to 
      * @return a new Edge
      */

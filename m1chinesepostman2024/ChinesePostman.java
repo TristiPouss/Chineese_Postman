@@ -3,12 +3,16 @@ package m1chinesepostman2024;
 import m1graphs2024.*;
 import java.util.*;
 
+/** 
+ * @author Tristan de Saint Gilles
+ * @author Anton Dolard
+ */
 public class ChinesePostman {
     /**
      * Variable used in developpement to print debug information or anything related to testing
      * @hidden SET TO FALSE BEFORE EXPORT
      */
-    public static final boolean dev = true;
+    public static final boolean dev = false;
     private List<Pair<Node, Node>> redEdges = new ArrayList<>();
 
     private final UndirectedGraphChinesePostman graph;
@@ -61,7 +65,7 @@ public class ChinesePostman {
     }
 
     private void computeEulerianCircuit() {
-        List<Node> circuit = eulerianTrail(graph, graph.getAllNodes().get(0));
+        List<Edge> circuit = eulerianTrail(graph.getAllNodes().get(0));
         System.out.println("Eulerian Circuit: " + circuit);
     }
 
@@ -73,7 +77,7 @@ public class ChinesePostman {
         }
     
         Node start = oddNodes.get(0);
-        List<Node> trail = eulerianTrail(graph, start);
+        List<Edge> trail = eulerianTrail(start);
         System.out.println("Eulerian Trail: " + trail);
     }
     
@@ -99,29 +103,62 @@ public class ChinesePostman {
     }
     
     
+    private List<Edge> eulerianTrail(Node start) {
+        if (dev) System.out.println("\nLoading Circuit/Trail...\n");
+        UndirectedGraphChinesePostman copy = graph.copy();
+        if (dev) System.out.println(copy.getList());
+        List<Edge> trail = new ArrayList<Edge>();
+        
+        eulerianTrailRecur(trail, copy, copy.getNode(start.getId()));
 
-    private List<Node> eulerianTrail(UndirectedGraphChinesePostman g, Node start) {
-        List<Node> trail = new ArrayList<>();
-        Deque<Node> stack = new ArrayDeque<>();
-        stack.push(start);
-    
-        while (stack.isEmpty()) {
-            Node current = stack.peek();
-            List<Node> neighbors = g.getNeighbors(current); // Méthode corrigée
-    
-            if (neighbors.isEmpty()) {
-                trail.add(stack.pop());
-            } else {
-                Node neighbor = neighbors.get(0); // Prendre le premier voisin disponible
-                g.removeEdge(current, neighbor);
-                stack.push(neighbor);
-            }
-        }
-    
-        Collections.reverse(trail); // Si un circuit eulérien est attendu
         return trail;
+
     }
 
+    private void eulerianTrailRecur(List<Edge> trail, UndirectedGraphChinesePostman g, Node u){
+        if (dev) System.out.println(" Curr : " + u);
+        List<Node> neighbors = g.getNeighbors(u);
+        if (dev) System.out.println("  Neighbors : " + neighbors);
+
+        for(Node v : neighbors){
+            if(isValidNextEdge(g, u, v)){
+                Edge e = g.getEdges(u, v).get(0);
+                if (dev) System.out.println("  "+e);
+                g.removeEdge(e);
+                if (dev) System.out.println("  "+g.getList());
+                trail.add(e);
+                eulerianTrailRecur(trail, g, v);
+            }
+        }
+    }
+
+    private boolean isValidNextEdge(UndirectedGraphChinesePostman g, Node u, Node v) {
+        // The edge u-v is valid in one of the
+        // following two cases:
+ 
+        // 1) If v is the only adjacent vertex of u
+        // ie size of adjacent vertex list is 1
+        if (g.degree(u) == 1) {
+            return true;
+        }
+ 
+        // 2) If there are multiple adjacents, then
+        // u-v is not a bridge Do following steps
+        // to check if u-v is a bridge
+        // 2.a) count of vertices reachable from u
+        int count1 = g.getDFS(u).size();
+
+        // 2.b) Remove edge (u, v) and after removing
+        //  the edge, count vertices reachable from u
+        if(g.getEdges(u, v).isEmpty()) return false;
+        Edge e = g.getEdges(u, v).get(0);
+        g.removeEdge(e);
+        int count2 = g.getDFS(u).size();
+ 
+        // 2.c) Add the edge back to the graph
+        g.addEdge(e);
+        return (count1 > count2) ? false : true;
+    }
 
     private int[][] floydWarshall(UndirectedGraph graph) {
         int size = graph.getAllNodes().size();

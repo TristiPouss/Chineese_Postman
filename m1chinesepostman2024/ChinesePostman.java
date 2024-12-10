@@ -354,8 +354,8 @@ public class ChinesePostman {
     * @throws IOException 
     */
     public void toDotFile(String filename) throws IOException {
-        Files.createDirectories(Paths.get("m1chinesepostman2024\\processed\\"));
-        String _filename = "m1chinesepostman2024\\processed\\" + filename + "-processed.gv";
+        Files.createDirectories(Paths.get("processed\\"));
+        String _filename = "processed\\" + filename + "-processed.gv";
         try {
             FileWriter dotFileWriter = new FileWriter(_filename);
             dotFileWriter.write(toDotString());

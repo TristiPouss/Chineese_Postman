@@ -109,7 +109,6 @@ public class ChinesePostman {
         computeEulerianCircuit();
     }
     
-    
     private List<Edge> eulerianTrail(Node start) {
         if (dev) System.out.println("\nLoading Circuit/Trail...\n");
         UndirectedGraphChinesePostman copy = graph.copy();
@@ -200,12 +199,6 @@ public class ChinesePostman {
         return dist;
     }
 
-    
-
-    
-    
- 
-    
     private void duplicateEdges(int u, int v, int[][] shortestPaths) {
         List<Integer> path = reconstructPath(u, v, shortestPaths);
         System.out.println("Duplicating path between " + u + " and " + v + ": " + path);
@@ -218,10 +211,6 @@ public class ChinesePostman {
 
         }
     }
-
-
-
-
     
     private List<Integer> reconstructPath(int u, int v, int[][] shortestPaths) {
         List<Integer> path = new ArrayList<>();
@@ -278,7 +267,6 @@ public class ChinesePostman {
         }
     }
     
-    
     private List<Pair<Node, Node>> findExistingEdgesToDuplicate(List<Node> oddNodes) {
         List<Pair<Node, Node>> duplicatePairs = new ArrayList<>();
     
@@ -296,9 +284,6 @@ public class ChinesePostman {
         System.out.println(duplicatePairs);
         return duplicatePairs;
     }
-    
-    
-    
     
     private void greedyDuplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
         // Étape 1 : Identifier les nœuds de degré impair
@@ -339,5 +324,89 @@ public class ChinesePostman {
         }
     }
     
+    /**
+     * for exporting the result graph as a file in the DOT syntax
+     * @param filename a String. The absolute path to the DOT file with no extension
+     * @param extension a String, The extension of the file
+     */
+    public void toDotFile(String filename) {
+        filename += "-processed.gv";
+        try {
+            FileWriter dotFileWriter = new FileWriter(filename);
+            dotFileWriter.write(toDotString());
+            dotFileWriter.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred. Could not create the file.");
+            e.printStackTrace();
+        }
+    }
+    
+    private String toDotString() {
+        String dotString = "graph {";
+
+        List<Node> usedNodes = graph.getAllNodesInEdges();
+
+        for (Node n : graph.getAllNodes()){
+            if(graph.getList().get(n).isEmpty()){
+                if(!usedNodes.contains(n)){
+                    dotString += "\n\t" + n;
+                }
+            }else{
+                for (Edge e : graph.getOutEdges(n)){
+                    if(e.from().getId() <= e.to().getId()){
+                        dotString += "\n\t" + e.from() + " -- " + e.to();
+                        if(e.isWeighted()) dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight() + "]";
+                    }
+                }
+            }
+        }
+
+        // Type
+        dotString += "\n\tlabel=\"Type : " + type;
+        
+        // Circuit / Trail
+        String s = "";
+        switch (type) {
+            case EULERIAN:
+                s = "Eulerian Circuit";
+                break;
+            case SEMI_EULERIAN:
+                s = "Eulerian Trail";
+                break;
+            case NON_EULERIAN:
+                s = "Chinese Circuit";
+                break;
+        }
+        dotString += "\n\t" + s + " : [";
+        int count = 0;
+        Iterator<Edge> iterator = trailCircuit.iterator();
+        while(iterator.hasNext()){
+            Edge e = iterator.next();
+            if(count == 4) {
+                dotString+="\n\t";
+                count = 0;
+            }
+            if(iterator.hasNext()){
+                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to() + ", ";
+            } else {
+                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to();
+            }
+            count++;
+        }
+        dotString += "]";
+        
+        // Total length
+        dotString += "\n\tTotal length : " + trailCircuit.size();
+        
+        // Extra cost if chinese circuit
+        if(type == Type.NON_EULERIAN){
+            dotString += "\n\tExtra cost : " + 0;
+        }
+
+        dotString +="\"";
+
+        dotString += "\n}";
+        return dotString;
+    }
     
 }

@@ -512,11 +512,7 @@ public class Graph {
      *         false else.
      */
     public boolean removeEdge(Node from, Node to){
-        if (!existsEdge(from, to)) return false;
-
-        adjEdList.get(from).remove(new Edge(from, to, this));
-
-        return true;
+        return adjEdList.get(from).remove(new Edge(from, to, this));
     }
 
     /**
@@ -528,11 +524,7 @@ public class Graph {
      *         false else.
      */
     public boolean removeEdge(Node from, Node to, int weight){
-        if (!existsEdge(from, to)) return false;
-
-        adjEdList.get(from).remove(new Edge(from, to, weight, this));
-
-        return true;
+        return adjEdList.get(from).remove(new Edge(from, to, weight, this));
     }
 
     /**
@@ -543,11 +535,7 @@ public class Graph {
      *         false else.
      */
     public boolean removeEdge(int from, int to){
-        if (!existsEdge(from, to)) return false;
-
-        adjEdList.get(getNode(from)).remove(new Edge(from, to, this));
-
-        return true;
+        return adjEdList.get(getNode(from)).remove(new Edge(from, to, this));
     }
 
     /**
@@ -559,11 +547,7 @@ public class Graph {
      *         false else.
      */
     public boolean removeEdge(int from, int to, int weight){
-        if (!existsEdge(from, to)) return false;
-
-        adjEdList.get(getNode(from)).remove(new Edge(from, to, weight, this));
-
-        return true;
+        return adjEdList.get(getNode(from)).remove(new Edge(from, to, weight, this));
     }
 
     /**
@@ -573,11 +557,7 @@ public class Graph {
      *         false else.
      */
     public boolean removeEdge(Edge e){
-        if (!existsEdge(e.from(), e.to())) return false;
-
-        adjEdList.get(e.from()).remove(e);
-
-        return true;
+        return adjEdList.get(e.from()).remove(e);
     }
 
     /**

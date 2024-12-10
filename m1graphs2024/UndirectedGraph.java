@@ -2,6 +2,7 @@ package m1graphs2024;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -288,7 +289,10 @@ public class UndirectedGraph extends Graph{
      */
     @Override
     public boolean existsEdge(Edge e) {
-        return super.existsEdge(e) && super.existsEdge(e.to(), e.from());
+        Edge e2;
+        if(e.isWeighted()) e2 = new Edge(e.to(), e.from(), e.getWeight(), e.getGraph());
+        else e2 = new Edge(e.to(), e.from(), e.getGraph());
+        return super.existsEdge(e) && super.existsEdge(e2);
     }
 
     /**

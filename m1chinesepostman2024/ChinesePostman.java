@@ -15,6 +15,7 @@ public class ChinesePostman {
      * @hidden SET TO FALSE BEFORE EXPORT
      */
     public static final boolean dev = false;
+    private List<Pair<Node, Node>> redEdges = new ArrayList<>();
 
     private final UndirectedGraphChinesePostman graph;
     private Type type;
@@ -66,6 +67,7 @@ public class ChinesePostman {
             System.out.println("Graph is Non-Eulerian.");
             type = Type.NON_EULERIAN;
             computeChinesePostmanCircuit();
+            System.out.println(redEdges);
         }
     }
 
@@ -86,35 +88,24 @@ public class ChinesePostman {
         System.out.println("Eulerian Trail: " + trail);
     }
     
-
     private void computeChinesePostmanCircuit() {
-        List<Node> oddNodes = getOddDegreeNodes();
-        if (oddNodes.isEmpty()) {
+        // Vérifier si le graphe est déjà eulérien
+        if (isEulerian()) {
             System.out.println("Graph is already Eulerian.");
             computeEulerianCircuit();
             return;
         }
     
-        // Étape 1 : Calcul des plus courts chemins
-        int size = graph.getAllNodes().size();
-        int[][] shortestPaths = floydWarshall(graph);
-    
-        // Étape 2 : Associer les sommets de degré impair
-        List<Integer> oddIndexes = new ArrayList<>();
-        for (Node oddNode : oddNodes) {
-            oddIndexes.add(graph.getAllNodes().indexOf(oddNode));
+        if (graph.getAllNodes().size() < 10) { // Par exemple, seuil pour utiliser la stratégie complète
+            System.out.println("Utilisation de la stratégie de couplage minimal (exhaustive).");
+            duplicateEdgesStrategy(graph);
+        } else {
+            System.out.println("Utilisation de la stratégie gloutonne.");
+            greedyDuplicateEdgesStrategy(graph);
         }
     
-        int[] match = findMinCostMatching(oddIndexes, shortestPaths);
-    
-        // Étape 3 : Dupliquer les arêtes pour les sommets appariés
-        for (int i = 0; i < match.length; i++) {
-            if (match[i] > i) {
-                duplicateEdges(oddIndexes.get(i), oddIndexes.get(match[i]), shortestPaths);
-            }
-        }
-    
-        // Étape 4 : Trouver un circuit eulérien
+        // Étape 5 : Générer le circuit eulérien avec le graphe modifié
+        System.out.println("Modified graph: " + graph.toDotString());
         computeEulerianCircuit();
     }
     
@@ -209,147 +200,144 @@ public class ChinesePostman {
         return dist;
     }
 
-    private int[] findMinCostMatching(List<Integer> oddNodes, int[][] shortestPaths) {
-        int n = oddNodes.size();
-        int[] match = new int[n];
-        Arrays.fill(match, -1);
     
-        // Approche brute-force pour trouver le couplage minimal
-        int minCost = Integer.MAX_VALUE;
-        int[] bestMatch = null;
-    
-        List<int[]> permutations = generatePermutations(oddNodes);
-        for (int[] permutation : permutations) {
-            int cost = 0;
-            for (int i = 0; i < permutation.length; i += 2) {
-                cost += shortestPaths[permutation[i]][permutation[i + 1]];
-            }
-            if (cost < minCost) {
-                minCost = cost;
-                bestMatch = permutation;
-            }
-        }
-    
-        // Convertir permutation en couplage
-        for (int i = 0; i < bestMatch.length; i += 2) {
-            match[bestMatch[i]] = bestMatch[i + 1];
-            match[bestMatch[i + 1]] = bestMatch[i];
-        }
-    
-        return match;
-    }
-    private List<int[]> generatePermutations(List<Integer> oddNodes) {
-        List<int[]> permutations = new ArrayList<>();
-        permute(oddNodes, 0, permutations);
-        return permutations;
-    }
-    
-    private void permute(List<Integer> nodes, int start, List<int[]> result) {
-        if (start == nodes.size()) {
-            // Ajouter une copie de la permutation actuelle
-            result.add(nodes.stream().mapToInt(Integer::intValue).toArray());
-            return;
-        }
-        for (int i = start; i < nodes.size(); i++) {
-            // Échanger les éléments
-            Collections.swap(nodes, start, i);
-            permute(nodes, start + 1, result);
-            // Restaurer l'ordre original
-            Collections.swap(nodes, start, i);
-        }
-    }
-    
+
     
     
  
     
     private void duplicateEdges(int u, int v, int[][] shortestPaths) {
-       
-        System.out.println("Duplicating edges between " + u + " and " + v);
+        List<Integer> path = reconstructPath(u, v, shortestPaths);
+        System.out.println("Duplicating path between " + u + " and " + v + ": " + path);
+        for (int i = 0; i < path.size() - 1; i++) {
+            Node from = graph.getAllNodes().get(path.get(i));
+            Node to = graph.getAllNodes().get(path.get(i + 1));
+            int weight = shortestPaths[path.get(i)][path.get(i + 1)];
+            graph.addEdge(from, to, weight);
+            redEdges.add(new Pair<>(from, to));
+
+        }
     }
 
-    /**
-     * for exporting the result graph as a file in the DOT syntax
-     * @param filename a String. The absolute path to the DOT file with no extension
-     * @param extension a String, The extension of the file
-     */
-    public void toDotFile(String filename) {
-        filename += "-processed.gv";
-        try {
-            FileWriter dotFileWriter = new FileWriter(filename);
-            dotFileWriter.write(toDotString());
-            dotFileWriter.close();
-        } catch (IOException e) {
-            System.out.println("An error occurred. Could not create the file.");
-            e.printStackTrace();
+
+
+
+    
+    private List<Integer> reconstructPath(int u, int v, int[][] shortestPaths) {
+        List<Integer> path = new ArrayList<>();
+        path.add(u);
+        if (u != v) path.add(v);
+        return path;
+    }
+
+    private void duplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
+        // Étape 1 : Identifier les nœuds de degré impair
+        List<Node> oddNodes = getOddDegreeNodes();
+        if (oddNodes.size() % 2 != 0) {
+            throw new IllegalArgumentException("Le graphe doit avoir un nombre pair de nœuds impairs.");
+        }
+    
+        // Étape 2 : Trouver les paires de nœuds impairs et les dupliquer
+        List<Pair<Node, Node>> duplicatePairs = findExistingEdgesToDuplicate(oddNodes);
+    
+        // Étape 3 : Dupliquer les arêtes existantes
+        while (!oddNodes.isEmpty()) {  // Continuer tant qu'il y a des nœuds impairs
+            Pair<Node, Node> pair = null;
+            for (Pair<Node, Node> candidate : duplicatePairs) {
+                Node u = candidate.getFirst();
+                Node v = candidate.getSecond();
+                // Si les deux nœuds de la paire sont impairs, les dupliquer
+                if (oddNodes.contains(u) && oddNodes.contains(v)) {
+                    pair = candidate;
+                    break;
+                }
+            }
+            
+            if (pair != null) {
+                Node u = pair.getFirst();
+                Node v = pair.getSecond();
+                assert (!graph.getEdges(u, v).isEmpty());
+    
+                // Dupliquer l'arête entre u et v
+                Edge e = graph.getEdges(u, v).get(0);
+                graph.addEdge(u, v, e.getWeight());  // Ajouter une arête dupliquée
+                redEdges.add(pair);
+                System.out.println("Arête dupliquée : " + u + " -- " + v);
+    
+                // Mettre à jour les nœuds impairs
+                if (u.degree() % 2 == 0) {
+                    oddNodes.remove(u);
+                }
+                if (v.degree() % 2 == 0) {
+                    oddNodes.remove(v);
+                }
+            } else {
+                // Si aucune paire n'est disponible, on peut arrêter (cas étrange)
+                break;
+            }
         }
     }
     
-    private String toDotString() {
-        String dotString = "graph {";
-
-        List<Node> usedNodes = graph.getAllNodesInEdges();
-
-        for (Node n : graph.getAllNodes()){
-            if(graph.getList().get(n).isEmpty()){
-                if(!usedNodes.contains(n)){
-                    dotString += "\n\t" + n;
-                }
-            }else{
-                for (Edge e : graph.getOutEdges(n)){
-                    if(e.from().getId() <= e.to().getId()){
-                        dotString += "\n\t" + e.from() + " -- " + e.to();
-                        if(e.isWeighted()) dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight() + "]";
-                    }
+    
+    private List<Pair<Node, Node>> findExistingEdgesToDuplicate(List<Node> oddNodes) {
+        List<Pair<Node, Node>> duplicatePairs = new ArrayList<>();
+    
+        // Pour chaque paire de nœuds impairs, cherchez une arête existante
+        for (int i = 0; i < oddNodes.size(); i++) {
+            for (int j = i + 1; j < oddNodes.size(); j++) {
+                Node u = oddNodes.get(i);
+                Node v = oddNodes.get(j);
+                // Si une arête existe déjà entre u et v, on l'ajoute à la liste des arêtes à dupliquer
+                if (graph.getNeighbors(u).contains(v)) {
+                    duplicatePairs.add(new Pair<>(u, v));
                 }
             }
         }
-
-        // Type
-        dotString += "\n\tlabel=\"Type : " + type;
-        
-        // Circuit / Trail
-        String s = "";
-        switch (type) {
-            case EULERIAN:
-                s = "Eulerian Circuit";
-                break;
-            case SEMI_EULERIAN:
-                s = "Eulerian Trail";
-                break;
-            case NON_EULERIAN:
-                s = "Chinese Circuit";
-                break;
-        }
-        dotString += "\n\t" + s + " : [";
-        int count = 0;
-        Iterator<Edge> iterator = trailCircuit.iterator();
-        while(iterator.hasNext()){
-            Edge e = iterator.next();
-            if(count == 4) {
-                dotString+="\n\t";
-                count = 0;
-            }
-            if(iterator.hasNext()){
-                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to() + ", ";
-            } else {
-                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to();
-            }
-            count++;
-        }
-        dotString += "]";
-        
-        // Total length
-        dotString += "\n\tTotal length : " + trailCircuit.size();
-        
-        // Extra cost if chinese circuit
-        if(type == Type.NON_EULERIAN){
-            dotString += "\n\tExtra cost : " + 0;
-        }
-
-        dotString +="\"";
-
-        dotString += "\n}";
-        return dotString;
+        System.out.println(duplicatePairs);
+        return duplicatePairs;
     }
+    
+    
+    
+    
+    private void greedyDuplicateEdgesStrategy(UndirectedGraphChinesePostman g) {
+        // Étape 1 : Identifier les nœuds de degré impair
+        List<Node> oddNodes = getOddDegreeNodes();
+        if (oddNodes.size() % 2 != 0) {
+            throw new IllegalArgumentException("Le graphe doit avoir un nombre pair de nœuds impairs.");
+        }
+    
+        // Étape 2 : Calculer les plus courts chemins entre chaque paire de nœuds impairs
+        int[][] shortestPaths = floydWarshall(g);
+        List<Integer> oddNodeIndices = new ArrayList<>();
+        for (Node node : oddNodes) {
+            oddNodeIndices.add(g.getAllNodes().indexOf(node));
+        }
+    
+        // Étape 3 : Construire une liste de paires triées par coût croissant
+        List<Pair<Integer, Integer>> pairs = new ArrayList<>();
+        for (int i = 0; i < oddNodeIndices.size(); i++) {
+            for (int j = i + 1; j < oddNodeIndices.size(); j++) {
+                int u = oddNodeIndices.get(i);
+                int v = oddNodeIndices.get(j);
+                pairs.add(new Pair<>(u, v));
+            }
+        }
+        // Trier les paires par le coût des plus courts chemins
+        pairs.sort(Comparator.comparingInt(pair -> shortestPaths[pair.getFirst()][pair.getSecond()]));
+    
+        // Étape 4 : Appariement des nœuds
+        boolean[] matched = new boolean[g.getAllNodes().size()];
+        for (Pair<Integer, Integer> pair : pairs) {
+            int u = pair.getFirst();
+            int v = pair.getSecond();
+            if (!matched[u] && !matched[v]) {
+                duplicateEdges(u, v, shortestPaths);
+                matched[u] = true;
+                matched[v] = true;
+            }
+        }
+    }
+    
+    
 }

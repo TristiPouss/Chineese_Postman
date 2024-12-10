@@ -1,6 +1,8 @@
 package m1chinesepostman2024;
 
 import m1graphs2024.*;
+
+import java.io.*;
 import java.util.*;
 
 /** 
@@ -15,6 +17,8 @@ public class ChinesePostman {
     public static final boolean dev = false;
 
     private final UndirectedGraphChinesePostman graph;
+    private Type type;
+    private List<Edge> trailCircuit;
 
     public ChinesePostman(UndirectedGraphChinesePostman graph) {
         this.graph = graph;
@@ -52,12 +56,15 @@ public class ChinesePostman {
     public void solve() {
         if (isEulerian()) {
             System.out.println("Graph is Eulerian.");
+            type = Type.EULERIAN;
             computeEulerianCircuit();
         } else if (isSemiEulerian()) {
             System.out.println("Graph is Semi-Eulerian.");
+            type = Type.SEMI_EULERIAN;
             computeEulerianTrail();
         } else {
             System.out.println("Graph is Non-Eulerian.");
+            type = Type.NON_EULERIAN;
             computeChinesePostmanCircuit();
         }
     }
@@ -69,7 +76,7 @@ public class ChinesePostman {
 
     private void computeEulerianTrail() {
         List<Node> oddNodes = getOddDegreeNodes();
-        if (oddNodes.size() != 2) {
+        if (type != Type.SEMI_EULERIAN) {
             System.out.println("Graph is not Semi-Eulerian.");
             return;
         }
@@ -120,6 +127,9 @@ public class ChinesePostman {
         
         eulerianTrailRecur(trail, copy, copy.getNode(start.getId()));
 
+        Collections.reverse(trail);
+        trailCircuit = trail;
+
         return trail;
 
     }
@@ -135,8 +145,8 @@ public class ChinesePostman {
                 if (dev) System.out.println("  "+e);
                 g.removeEdge(e);
                 if (dev) System.out.println("  "+g.getList());
-                trail.add(e);
                 eulerianTrailRecur(trail, g, v);
+                trail.add(e);
             }
         }
     }
@@ -257,6 +267,89 @@ public class ChinesePostman {
        
         System.out.println("Duplicating edges between " + u + " and " + v);
     }
-    
-}
 
+    /**
+     * for exporting the result graph as a file in the DOT syntax
+     * @param filename a String. The absolute path to the DOT file with no extension
+     * @param extension a String, The extension of the file
+     */
+    public void toDotFile(String filename) {
+        filename += "-processed.gv";
+        try {
+            FileWriter dotFileWriter = new FileWriter(filename);
+            dotFileWriter.write(toDotString());
+            dotFileWriter.close();
+        } catch (IOException e) {
+            System.out.println("An error occurred. Could not create the file.");
+            e.printStackTrace();
+        }
+    }
+    
+    private String toDotString() {
+        String dotString = "graph {";
+
+        List<Node> usedNodes = graph.getAllNodesInEdges();
+
+        for (Node n : graph.getAllNodes()){
+            if(graph.getList().get(n).isEmpty()){
+                if(!usedNodes.contains(n)){
+                    dotString += "\n\t" + n;
+                }
+            }else{
+                for (Edge e : graph.getOutEdges(n)){
+                    if(e.from().getId() <= e.to().getId()){
+                        dotString += "\n\t" + e.from() + " -- " + e.to();
+                        if(e.isWeighted()) dotString += " [label=" + e.getWeight() + ", len=" + e.getWeight() + "]";
+                    }
+                }
+            }
+        }
+
+        // Type
+        dotString += "\n\tlabel=\"Type : " + type;
+        
+        // Circuit / Trail
+        String s = "";
+        switch (type) {
+            case EULERIAN:
+                s = "Eulerian Circuit";
+                break;
+            case SEMI_EULERIAN:
+                s = "Eulerian Trail";
+                break;
+            case NON_EULERIAN:
+                s = "Chinese Circuit";
+                break;
+        }
+        dotString += "\n\t" + s + " : [";
+        int count = 0;
+        Iterator<Edge> iterator = trailCircuit.iterator();
+        while(iterator.hasNext()){
+            Edge e = iterator.next();
+            if(count == 4) {
+                dotString+="\n\t";
+                count = 0;
+            }
+            if(iterator.hasNext()){
+                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to() + ", ";
+            } else {
+                dotString+= e.from() + "-(" + e.getWeight() + ")-" + e.to();
+            }
+            count++;
+        }
+        dotString += "]";
+        
+        // Total length
+        dotString += "\n\tTotal length : " + trailCircuit.size();
+        
+        // Extra cost if chinese circuit
+        if(type == Type.NON_EULERIAN){
+            dotString += "\n\tExtra cost : " + 0;
+        }
+
+        dotString +="\"";
+
+        dotString += "\n}";
+        return dotString;
+    }
+}

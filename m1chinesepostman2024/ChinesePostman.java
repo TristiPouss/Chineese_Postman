@@ -94,13 +94,14 @@ public class ChinesePostman {
 
     
     private void computeChinesePostmanCircuit() {
+        // Do not close the scanner, else the main function scanner will crash.
+        @SuppressWarnings("resource")
         Scanner scanner = new Scanner(System.in);
         
-    
         // Demander à l'utilisateur quelle stratégie utiliser
-        System.out.println("Choose a strategy :");
-        System.out.println("1 - Greedy strategy");
-        System.out.println("2 - Exhaustive matching strategy");
+        System.out.println("\nChoose a strategy :");
+        System.out.println("  1 - Greedy strategy");
+        System.out.println("  2 - Exhaustive matching strategy");
         System.out.print("Your choice (1 or 2) : ");
     
         int choice;
@@ -116,13 +117,13 @@ public class ChinesePostman {
                 System.out.print("Enter a valid number (1 or 2) : ");
             }
         }
-        scanner.close();
+        //scanner.close();
         // Appliquer la stratégie choisie
         if (choice == 1) {
-            System.out.println("Using Greedy strategy.");
+            System.out.println("\nUsing Greedy strategy.");
             greedyDuplicateEdgesStrategy(graph);
         } else {
-            System.out.println("Using Exhaustive matching strategy .");
+            System.out.println("\nUsing Exhaustive matching strategy .");
             duplicateEdgesStrategy(graph);
         }
     
